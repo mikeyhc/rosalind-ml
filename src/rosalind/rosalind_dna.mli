@@ -1,4 +1,29 @@
+(** This module represents a nucleotide encoding of a DNA strand
+
+    @author mikeyhc*)
+
+(** Type representing a DNA strand *)
 type t
 
+(** Convert a string to a DNA object, no character validity checking
+    is performed
+
+    @param s string representing the DNA strand
+    @return a DNA object *)
 val of_string : string -> t
+
+(** Convert a DNA object to a string, no character validity checking
+    is performed
+
+    @param t the DNA object
+    @return a string of the object *)
+val to_string : t -> string
+
+(** Counts the occurance of each nucleotide in the DNA strand
+
+    @param t the DNA object to count nucleotides in
+    @return if the DNA is valid a tuple with the counts of each of
+            nucleotide will be returned in an Ok of the form
+            (a * c * g * t), otherwise an Error with a string description
+            of the error will be returned *)
 val count_nucleotides : t -> ((int * int * int * int), string) result

@@ -1,6 +1,7 @@
 type t = string
 
 let of_string s = s
+let to_string t = t
 
 let count_nucleotides t =
   let count = fun t e ->
