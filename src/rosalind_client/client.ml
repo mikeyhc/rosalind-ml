@@ -48,7 +48,7 @@ let dna =
     ]
 
 
-let rna =
+let rna_transcribe =
   Core.Command.basic ~summary:"Convert a DNA string to RNA"
     common
     (read_line_f
@@ -57,8 +57,27 @@ let rna =
         |> Rosalind.RNA.of_dna
         |> fun r -> Printf.printf "%s\n" (Rosalind.RNA.to_string r)))
 
+let rna =
+  Core.Command.group ~summary:"RNA operations"
+    [ "transcribe", rna_transcribe ]
+
+let fib_n =
+  Core.Command.basic ~summary:("Calculate the fib sequence for N generations "
+                            ^ "where each generation has M offspring and "
+                            ^ "comes of breeding age after 1 iteration")
+    Core.Command.Spec.(
+      empty
+      +> anon ("n" %: int)
+      +> anon ("m" %: int))
+    (fun n m () ->
+      Printf.printf "%d\n" (Rosalind.Num.fib_n n m))
+
+let num =
+  Core.Command.group ~summary:"Numeric operations"
+   ["fib-n", fib_n]
+
 let command =
   Core.Command.group ~summary:"Manipulate genetic data"
-    ["dna", dna ; "rna", rna]
+    ["dna", dna ; "rna", rna ; "num", num]
 
 let () = Core.Command.run command

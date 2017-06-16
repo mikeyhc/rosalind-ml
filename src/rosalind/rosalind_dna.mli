@@ -1,6 +1,6 @@
 (** This module represents a nucleotide encoding of a DNA strand
 
-    @author mikeyhc*)
+    @author mikeyhc *)
 
 (** Type representing a DNA strand *)
 type t
