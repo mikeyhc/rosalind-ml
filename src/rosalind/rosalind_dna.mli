@@ -27,3 +27,11 @@ val to_string : t -> string
             (a * c * g * t), otherwise an Error with a string description
             of the error will be returned *)
 val count_nucleotides : t -> ((int * int * int * int), string) result
+
+(** Returns the reverse compliment of the given DNA strand
+
+    @param t the DNA object to reverse and compliment
+    @return if the DNA is valid a new DNA object with the reverse compliment
+            will be returned, otherwise an Error with a string description
+            of the error will be returned *)
+val reverse_compliment : t -> (t, string) result

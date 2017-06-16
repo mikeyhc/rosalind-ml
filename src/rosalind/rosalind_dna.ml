@@ -1,5 +1,7 @@
 type t = string
 
+exception InvalidDNA
+
 let of_string s = s
 let to_string t = t
 
@@ -17,3 +19,18 @@ let count_nucleotides t =
       | Error _ as err -> err
   in
   Core.String.fold ~f:count ~init:(Ok (0, 0, 0, 0)) t
+
+let reverse_compliment t =
+  let buf = Buffer.create (String.length t) in
+  let compliment = function
+    | 'A' | 'a' -> Buffer.add_char buf 'T'
+    | 'T' | 't' -> Buffer.add_char buf 'A'
+    | 'C' | 'c' -> Buffer.add_char buf 'G'
+    | 'G' | 'g' -> Buffer.add_char buf 'C'
+    | _ -> raise InvalidDNA
+  in
+  try
+    String.iter compliment (Core.String.rev t);
+    Ok (Buffer.contents buf)
+  with
+  | InvalidDNA -> Error "Invalid DNA"
