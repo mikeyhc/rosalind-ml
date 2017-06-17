@@ -1,3 +1,5 @@
+(* TODO: allow DNA based functions to take DNA strings commandline args *)
+
 let common =
   Core.Command.Spec.(
     empty
@@ -6,12 +8,48 @@ let common =
 
 let read_line_f f =
   (fun mf () ->
-      let line = match mf with
-      | Some f ->
-          Core.In_channel.with_file f ~f:(fun inc -> input_line inc)
-      | None -> input_line stdin
-      in
-      f line)
+    let line = match mf with
+    | Some f -> "ABC"
+      (* Core.In_channel.with_file f ~f:(fun inc -> input_line inc) *)
+    | None -> input_line stdin
+    in
+    f line)
+
+let rec read_fasta_file' chan line =
+  if line.[0] != '>' then
+    begin
+      Printf.fprintf stderr "invalid fasta file (expected '>', got '%c')\n"
+        line.[0];
+      exit 1
+    end
+  else
+    let title = String.sub line 1 ((String.length line) - 1) in
+    let l = ref (input_line chan) in
+    let b = Buffer.create 1000 in (* Strings are at most 1 kbp *)
+    try
+      begin
+        while !l.[0] != '>' do
+          Buffer.add_string b !l;
+          l := input_line chan
+        done;
+        (title, Buffer.contents b)::(read_fasta_file' chan !l)
+      end
+    with
+    | End_of_file -> [(title, Buffer.contents b)]
+
+
+let read_fasta_file chan =
+  let str_pairs = read_fasta_file' chan (input_line chan) in
+  List.map (fun (title, s) -> (title, Rosalind.DNA.of_string s)) str_pairs
+
+let read_fasta_f f =
+  (fun mf () ->
+    let fasta = match mf with
+    | Some f ->
+        Core.In_channel.with_file f ~f:read_fasta_file
+    | None -> read_fasta_file stdin
+    in
+    f fasta)
 
 let dna_count =
   Core.Command.basic ~summary:"Count nucleotides in a DNA string"
@@ -41,10 +79,35 @@ let dna_compliment =
               exit 1
       ))
 
+let gc_content =
+  Core.Command.basic ~summary:"Obtains the GC content of a DNA string"
+    common
+    (read_line_f
+      (fun line ->
+        Rosalind.DNA.of_string line
+        |> Rosalind.DNA.gc_content
+        |> Printf.printf "%f\n"))
+
+let highest_gc =
+  Core.Command.basic ~summary:("Finds the DNA string with the highest GC "
+                             ^ "content")
+    common
+    (read_fasta_f
+      (fun fasta ->
+          Rosalind.DNA.highest_gc fasta
+          |> function
+            | Some (title, amount) ->
+                Printf.printf "%s\n%f\n" title amount
+            | None ->
+                Printf.fprintf stderr "no strings provided\n";
+                exit 1))
+
 let dna =
   Core.Command.group ~summary:"DNA operations"
     [ "count", dna_count
     ; "compliment", dna_compliment
+    ; "gc-content", gc_content
+    ; "highest-gc", highest_gc
     ]
 
 
@@ -63,8 +126,8 @@ let rna =
 
 let fib_n =
   Core.Command.basic ~summary:("Calculate the fib sequence for N generations "
-                            ^ "where each generation has M offspring and "
-                            ^ "comes of breeding age after 1 iteration")
+                             ^ "where each generation has M offspring and "
+                             ^ "comes of breeding age after 1 iteration")
     Core.Command.Spec.(
       empty
       +> anon ("n" %: int)

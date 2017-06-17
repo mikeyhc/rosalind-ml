@@ -23,3 +23,6 @@ setup.log
 Ocamlrules.mk.in
 build/
 pds.mk
+
+# vim files
+*.swp

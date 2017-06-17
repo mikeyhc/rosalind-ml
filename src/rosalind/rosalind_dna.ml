@@ -34,3 +34,22 @@ let reverse_compliment t =
     Ok (Buffer.contents buf)
   with
   | InvalidDNA -> Error "Invalid DNA"
+
+let gc_content t =
+  let count_gc = fun acc e ->
+    match e with
+      | 'G' | 'g' | 'C' | 'c' -> acc +. 1.
+      | _ -> acc
+  in
+  let count = Core.String.fold ~f:count_gc ~init:0. t
+  in count /. float_of_int (String.length t) *. 100.
+
+let highest_gc = function
+  | ((title, str)::ft) ->
+      let highest = fun ((_at, ac) as acc) (et, es) ->
+        let ec = gc_content es in
+        if ec > ac then (et, ec) else acc
+      in
+      Some (List.fold_left highest (title, gc_content str) ft)
+  | _ -> None
+

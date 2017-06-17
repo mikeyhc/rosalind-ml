@@ -35,3 +35,16 @@ val count_nucleotides : t -> ((int * int * int * int), string) result
             will be returned, otherwise an Error with a string description
             of the error will be returned *)
 val reverse_compliment : t -> (t, string) result
+
+(** Returns the GC content of a given DNA strand
+
+    @param t the DNA string to calculate the GC content of
+    @return  the GC content of the strand *)
+val gc_content : t -> float
+
+(* Returns the FASTA pair with the highest GC content
+
+   @param fasta_list a list of FASTA strings
+   @return the name and GC content of the string with the highest GC
+           content *)
+val highest_gc: (string * t) list -> (string * float) option
