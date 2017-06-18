@@ -9,11 +9,22 @@ let common =
 let read_line_f f =
   (fun mf () ->
     let line = match mf with
-    | Some f -> "ABC"
-      (* Core.In_channel.with_file f ~f:(fun inc -> input_line inc) *)
+    | Some f ->
+        Core.In_channel.with_file f ~f:(fun inc -> input_line inc)
     | None -> input_line stdin
     in
     f line)
+
+let read_two_line_f f =
+  (fun mf () ->
+    let read_two_lines = fun chan -> input_line chan, input_line chan in
+    let (a, b) = match mf with
+    | Some f ->
+        Core.In_channel.with_file f ~f:read_two_lines
+    | None -> read_two_lines stdin
+    in
+    f a b)
+
 
 let rec read_fasta_file' chan line =
   if line.[0] != '>' then
@@ -124,6 +135,25 @@ let rna =
   Core.Command.group ~summary:"RNA operations"
     [ "transcribe", rna_transcribe ]
 
+let protein_from_rna =
+  Core.Command.basic ~summary:"Convert an rna string into a protein"
+    common
+    (read_line_f
+      (fun line ->
+        Rosalind.RNA.of_string line
+        |> Rosalind.Protein.of_rna
+        |> function
+          | Ok protein -> Printf.printf "%s\n"
+            (Rosalind.Protein.to_string protein)
+          | Error err ->
+              Printf.fprintf stderr "%s\n" err;
+              exit 1))
+
+
+let protein =
+  Core.Command.group ~summary:"Protein operations"
+    [ "from-rna", protein_from_rna ]
+
 let fib_n =
   Core.Command.basic ~summary:("Calculate the fib sequence for N generations "
                              ^ "where each generation has M offspring and "
@@ -135,12 +165,45 @@ let fib_n =
     (fun n m () ->
       Printf.printf "%d\n" (Rosalind.Num.fib_n n m))
 
+let dominant_allele =
+  Core.Command.basic ~summary:("Calculate the probability of an of "
+                             ^ "the dominant allele being present in "
+                             ^ "the offspring of K homozygous dominant, "
+                             ^ "M hetrozygous and N hetrozygous recessive")
+    Core.Command.Spec.(
+      empty
+      +> anon ("k" %: int)
+      +> anon ("m" %: int)
+      +> anon ("n" %: int))
+    (fun k m n () ->
+      Printf.printf "%f\n" (Rosalind.Num.dominant_allele k m n))
+
+let hamming =
+  Core.Command.basic ~summary:("Calculate the hamming distance between two "
+                             ^ "strings")
+    common
+    (read_two_line_f
+      (fun a b ->
+        Rosalind.Str.hamming_exn a b
+        |> Printf.printf "%d\n"))
+
 let num =
   Core.Command.group ~summary:"Numeric operations"
-   ["fib-n", fib_n]
+   [ "fib-n", fib_n
+   ; "dominant", dominant_allele
+   ]
+
+let str =
+  Core.Command.group ~summary:"String operations"
+  ["hamming", hamming]
 
 let command =
   Core.Command.group ~summary:"Manipulate genetic data"
-    ["dna", dna ; "rna", rna ; "num", num]
+    [ "dna", dna
+    ; "rna", rna
+    ; "protein", protein
+    ; "num", num
+    ; "str", str
+    ]
 
 let () = Core.Command.run command
