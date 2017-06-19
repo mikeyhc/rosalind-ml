@@ -17,7 +17,11 @@ let read_line_f f =
 
 let read_two_line_f f =
   (fun mf () ->
-    let read_two_lines = fun chan -> input_line chan, input_line chan in
+    let read_two_lines = fun chan ->
+      (* use this method because tuple evaluation has undefined ordering *)
+      let a = input_line chan in
+      (a, input_line chan)
+    in
     let (a, b) = match mf with
     | Some f ->
         Core.In_channel.with_file f ~f:read_two_lines
@@ -178,6 +182,12 @@ let dominant_allele =
     (fun k m n () ->
       Printf.printf "%f\n" (Rosalind.Num.dominant_allele k m n))
 
+let num =
+  Core.Command.group ~summary:"Numeric operations"
+   [ "fib-n", fib_n
+   ; "dominant", dominant_allele
+   ]
+
 let hamming =
   Core.Command.basic ~summary:("Calculate the hamming distance between two "
                              ^ "strings")
@@ -187,15 +197,20 @@ let hamming =
         Rosalind.Str.hamming_exn a b
         |> Printf.printf "%d\n"))
 
-let num =
-  Core.Command.group ~summary:"Numeric operations"
-   [ "fib-n", fib_n
-   ; "dominant", dominant_allele
-   ]
+let motif =
+  Core.Command.basic ~summary:"Find the occurances of a motif within a string"
+    common
+    (read_two_line_f
+      (fun a b ->
+        let data = (Rosalind.Str.motif a b) in
+        List.iter (Printf.printf "%d ") data;
+        print_newline ()))
 
 let str =
   Core.Command.group ~summary:"String operations"
-  ["hamming", hamming]
+  [ "hamming", hamming
+  ; "motif", motif
+  ]
 
 let command =
   Core.Command.group ~summary:"Manipulate genetic data"
